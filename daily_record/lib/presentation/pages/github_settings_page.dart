@@ -38,12 +38,13 @@ class _GitHubSettingsPageState extends State<GitHubSettingsPage> {
 
     // 初期化が完了するまで待機
     while (!provider.isInitialized) {
-      await Future.delayed(const Duration(milliseconds: 100));
+      await Future<void>.delayed(const Duration(milliseconds: 100));
     }
 
     final settings = provider.settings;
     if (settings != null) {
       _tokenController.text = settings.token;
+      if (!mounted) return;
       setState(() {
         _isEnabled = settings.isEnabled;
       });
@@ -63,6 +64,7 @@ class _GitHubSettingsPageState extends State<GitHubSettingsPage> {
         _tokenController.text.trim(),
       );
 
+      if (!mounted) return;
       if (isValid) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -79,6 +81,7 @@ class _GitHubSettingsPageState extends State<GitHubSettingsPage> {
         );
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('トークンの検証中にエラーが発生しました: $e'),
@@ -86,6 +89,7 @@ class _GitHubSettingsPageState extends State<GitHubSettingsPage> {
         ),
       );
     } finally {
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
       });
@@ -109,6 +113,7 @@ class _GitHubSettingsPageState extends State<GitHubSettingsPage> {
       );
       await provider.saveSettings(newSettings);
 
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('設定が保存されました！'),
@@ -116,6 +121,7 @@ class _GitHubSettingsPageState extends State<GitHubSettingsPage> {
         ),
       );
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('設定の保存中にエラーが発生しました: $e'),
@@ -123,6 +129,7 @@ class _GitHubSettingsPageState extends State<GitHubSettingsPage> {
         ),
       );
     } finally {
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
       });

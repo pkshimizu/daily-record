@@ -71,11 +71,11 @@ class _SettingsPageState extends State<SettingsPage> {
                       title: Text('アプリ情報'),
                       subtitle: Text('バージョン情報など'),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.all(16),
+                    const Padding(
+                      padding: EdgeInsets.all(16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const <Widget>[
+                        children: [
                           Text('アプリ名: Daily Record'),
                           Text('バージョン: 1.0.0'),
                           Text('開発者: Your Name'),
@@ -95,11 +95,11 @@ class _SettingsPageState extends State<SettingsPage> {
                       title: Text('その他の設定'),
                       subtitle: Text('追加の設定オプション'),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.all(16),
+                    const Padding(
+                      padding: EdgeInsets.all(16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const <Widget>[Text('今後追加予定の設定項目です。')],
+                        children: [Text('今後追加予定の設定項目です。')],
                       ),
                     ),
                   ],
