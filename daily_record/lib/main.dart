@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 
+import 'data/datasources/settings_local_datasource.dart';
+import 'data/repositories/settings_repository_impl.dart';
 import 'day_detail_page.dart';
+import 'domain/usecases/get_dark_mode_usecase.dart';
+import 'domain/usecases/set_dark_mode_usecase.dart';
+import 'presentation/providers/settings_provider.dart';
+import 'settings_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,12 +22,70 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Daily Record',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-      ),
-      home: const BlankPage(),
+    return MultiProvider(
+      providers: [
+        Provider<SettingsLocalDataSource>(
+          create: (_) => SettingsLocalDataSource(),
+        ),
+        Provider<SettingsRepositoryImpl>(
+          create:
+              (context) => SettingsRepositoryImpl(
+                context.read<SettingsLocalDataSource>(),
+              ),
+        ),
+        Provider<GetDarkModeUseCase>(
+          create:
+              (context) =>
+                  GetDarkModeUseCase(context.read<SettingsRepositoryImpl>()),
+        ),
+        Provider<SetDarkModeUseCase>(
+          create:
+              (context) =>
+                  SetDarkModeUseCase(context.read<SettingsRepositoryImpl>()),
+        ),
+        ChangeNotifierProvider<SettingsProvider>(
+          create:
+              (context) => SettingsProvider(
+                context.read<GetDarkModeUseCase>(),
+                context.read<SetDarkModeUseCase>(),
+              ),
+        ),
+      ],
+      child: const MyAppContent(),
+    );
+  }
+}
+
+class MyAppContent extends StatefulWidget {
+  const MyAppContent({super.key});
+
+  @override
+  State<MyAppContent> createState() => _MyAppContentState();
+}
+
+class _MyAppContentState extends State<MyAppContent> {
+  @override
+  void initState() {
+    super.initState();
+    // アプリ起動時にダークモード設定を読み込み
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<SettingsProvider>().loadDarkMode();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<SettingsProvider>(
+      builder: (context, settingsProvider, child) {
+        return MaterialApp(
+          title: 'Daily Record',
+          theme:
+              settingsProvider.isDarkMode
+                  ? ThemeData.dark()
+                  : ThemeData.light(),
+          home: const BlankPage(),
+        );
+      },
     );
   }
 }
@@ -33,8 +98,14 @@ class BlankPage extends StatefulWidget {
 }
 
 class _BlankPageState extends State<BlankPage> {
-  DateTime _focusedDay = DateTime.now();
+  late DateTime _focusedDay;
   DateTime? _selectedDay;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusedDay = DateTime.now();
+  }
 
   void _onDaySelected(DateTime selectedDay, DateTime focusedDay) {
     setState(() {
@@ -57,6 +128,17 @@ class _BlankPageState extends State<BlankPage> {
       appBar: AppBar(
         title: const Text('Daily Record'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsPage()),
+              );
+            },
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
