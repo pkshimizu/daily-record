@@ -4,9 +4,11 @@ import 'package:daily_record/data/models/github_settings_model.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
+/// ローカル設定データの管理を担当するデータソース
 class SettingsLocalDataSource {
   static Database? _database;
 
+  /// データベースインスタンスを取得
   Future<Database> get database async {
     if (_database != null) return _database!;
     _database = await _initDatabase();
@@ -23,8 +25,8 @@ class SettingsLocalDataSource {
     );
   }
 
+  /// 設定テーブルを作成
   Future<void> _onCreate(Database db, int version) async {
-    // 設定テーブルを作成
     await db.execute('''
       CREATE TABLE settings(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -71,6 +73,7 @@ class SettingsLocalDataSource {
     }
   }
 
+  /// 設定値を取得
   Future<String?> getSetting(String key) async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
@@ -85,6 +88,7 @@ class SettingsLocalDataSource {
     return null;
   }
 
+  /// 設定値を保存
   Future<void> setSetting(String key, String value) async {
     final db = await database;
     await db.insert('settings', {
@@ -93,6 +97,7 @@ class SettingsLocalDataSource {
     }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
+  /// GitHub設定を取得
   Future<GitHubSettingsModel?> getGitHubSettings() async {
     try {
       final db = await database;
@@ -111,6 +116,7 @@ class SettingsLocalDataSource {
     }
   }
 
+  /// GitHub設定を保存
   Future<void> saveGitHubSettings(GitHubSettingsModel settings) async {
     try {
       developer.log(
@@ -152,7 +158,8 @@ class SettingsLocalDataSource {
     }
   }
 
-  Future<void> updateGitHubEnabled(bool isEnabled) async {
+  /// GitHub連携有効フラグを更新
+  Future<void> updateGitHubEnabled({required bool isEnabled}) async {
     try {
       final db = await database;
       final existingSettings = await getGitHubSettings();
@@ -179,6 +186,7 @@ class SettingsLocalDataSource {
     }
   }
 
+  /// DBをクローズ
   Future<void> close() async {
     final db = await database;
     await db.close();

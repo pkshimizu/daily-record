@@ -1,132 +1,179 @@
+import 'package:daily_record/data/models/github_settings_model.dart';
+import 'package:daily_record/domain/repositories/github_repository.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import '../../data/models/github_settings_model.dart';
-import '../../domain/usecases/github_usecases.dart';
-
+/// GitHub設定の状態管理
 class GitHubProvider extends ChangeNotifier {
-  final GetGitHubSettingsUseCase _getSettingsUseCase;
-  final SaveGitHubSettingsUseCase _saveSettingsUseCase;
-  final UpdateGitHubEnabledUseCase _updateEnabledUseCase;
-  final ValidateGitHubTokenUseCase _validateTokenUseCase;
-  final GetGitHubUserInfoUseCase _getUserInfoUseCase;
+  /// コンストラクタ
+  GitHubProvider(this._repository) {
+    _loadSettings();
+  }
 
-  GitHubProvider({
-    required GetGitHubSettingsUseCase getSettingsUseCase,
-    required SaveGitHubSettingsUseCase saveSettingsUseCase,
-    required UpdateGitHubEnabledUseCase updateEnabledUseCase,
-    required ValidateGitHubTokenUseCase validateTokenUseCase,
-    required GetGitHubUserInfoUseCase getUserInfoUseCase,
-  }) : _getSettingsUseCase = getSettingsUseCase,
-       _saveSettingsUseCase = saveSettingsUseCase,
-       _updateEnabledUseCase = updateEnabledUseCase,
-       _validateTokenUseCase = validateTokenUseCase,
-       _getUserInfoUseCase = getUserInfoUseCase;
-
+  final GitHubRepository _repository;
   GitHubSettingsModel? _settings;
   bool _isLoading = false;
   String? _error;
-  Map<String, dynamic>? _userInfo;
 
+  /// 設定
   GitHubSettingsModel? get settings => _settings;
-  bool get isLoading => _isLoading;
-  String? get error => _error;
-  Map<String, dynamic>? get userInfo => _userInfo;
 
-  Future<void> loadSettings() async {
+  /// ローディング状態
+  bool get isLoading => _isLoading;
+
+  /// エラーメッセージ
+  String? get error => _error;
+
+  /// GitHub連携が有効かどうか
+  bool get isEnabled => _settings?.isEnabled ?? false;
+
+  /// 設定を読み込み
+  Future<void> _loadSettings() async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      _settings = await _getSettingsUseCase();
-      if (_settings != null && _settings!.isEnabled) {
-        await _loadUserInfo();
-      }
+      _settings = await _repository.getGitHubSettings();
     } catch (e) {
-      _error = '設定の読み込みに失敗しました';
+      _error = '設定の読み込みに失敗しました: $e';
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  Future<void> saveSettings(String token, bool isEnabled) async {
+  /// 設定を保存
+  Future<void> saveSettings(GitHubSettingsModel settings) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      final newSettings = GitHubSettingsModel(
-        id: _settings?.id ?? 0,
-        token: token,
-        isEnabled: isEnabled,
-      );
-
-      await _saveSettingsUseCase(newSettings);
-      _settings = newSettings;
-
-      if (isEnabled) {
-        await _loadUserInfo();
-      } else {
-        _userInfo = null;
-      }
+      await _repository.saveGitHubSettings(settings);
+      _settings = settings;
     } catch (e) {
       _error = '設定の保存に失敗しました: $e';
-      print('GitHub settings save error: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  Future<void> updateEnabled(bool isEnabled) async {
-    if (_settings == null) return;
-
+  /// トークンを検証
+  Future<bool> validateToken(String token) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      await _updateEnabledUseCase(isEnabled);
-      _settings = GitHubSettingsModel(
-        id: _settings!.id,
-        token: _settings!.token,
-        isEnabled: isEnabled,
-      );
-
-      if (isEnabled) {
-        await _loadUserInfo();
-      } else {
-        _userInfo = null;
-      }
+      return await _repository.validateToken(token);
     } catch (e) {
-      _error = '設定の更新に失敗しました';
+      _error = 'トークンの検証に失敗しました: $e';
+      return false;
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  Future<bool> validateToken(String token) async {
+  /// ユーザー情報を取得
+  Future<Map<String, dynamic>?> getUserInfo(String token) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
     try {
-      return await _validateTokenUseCase(token);
+      return await _repository.getUserInfo(token);
     } catch (e) {
+      _error = 'ユーザー情報の取得に失敗しました: $e';
+      return null;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// リポジトリを検証
+  Future<bool> validateRepository(
+    String token,
+    String username,
+    String repository,
+  ) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      return await _repository.validateRepository(token, username, repository);
+    } catch (e) {
+      _error = 'リポジトリの検証に失敗しました: $e';
       return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
-  Future<void> _loadUserInfo() async {
-    if (_settings == null || !_settings!.isEnabled) return;
+  /// ファイルを作成
+  Future<bool> createFile(
+    String token,
+    String username,
+    String repository,
+    String path,
+    String content,
+    String message,
+  ) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
 
     try {
-      _userInfo = await _getUserInfoUseCase(_settings!.token);
+      return await _repository.createFile(
+        token,
+        username,
+        repository,
+        path,
+        content,
+        message,
+      );
     } catch (e) {
-      // ユーザー情報の取得に失敗してもエラーにはしない
-      _userInfo = null;
+      _error = 'ファイルの作成に失敗しました: $e';
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
+  /// ファイル内容を取得
+  Future<String?> getFileContent(
+    String token,
+    String username,
+    String repository,
+    String path,
+  ) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      return await _repository.getFileContent(
+        token,
+        username,
+        repository,
+        path,
+      );
+    } catch (e) {
+      _error = 'ファイル内容の取得に失敗しました: $e';
+      return null;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// エラーをクリア
   void clearError() {
     _error = null;
     notifyListeners();

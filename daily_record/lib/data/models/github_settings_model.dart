@@ -1,5 +1,12 @@
 /// GitHubの設定モデル
 class GitHubSettingsModel {
+  /// コンストラクタ
+  GitHubSettingsModel({
+    required this.id,
+    required this.token,
+    required this.isEnabled,
+  });
+
   /// ID
   final int id;
 
@@ -8,13 +15,6 @@ class GitHubSettingsModel {
 
   /// GitHub連携が有効かどうか
   final bool isEnabled;
-
-  /// コンストラクタ
-  GitHubSettingsModel({
-    required this.id,
-    required this.token,
-    required this.isEnabled,
-  });
 
   /// Mapからインスタンス生成
   factory GitHubSettingsModel.fromMap(Map<String, dynamic> map) =>

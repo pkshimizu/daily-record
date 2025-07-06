@@ -1,11 +1,13 @@
-import '../repositories/settings_repository.dart';
+import 'package:daily_record/domain/repositories/settings_repository.dart';
 
+/// ダークモード設定ユースケース
 class SetDarkModeUseCase {
-  final SettingsRepository _repository;
-
+  /// コンストラクタ
   SetDarkModeUseCase(this._repository);
 
-  Future<void> execute(bool isDarkMode) async {
-    await _repository.setDarkMode(isDarkMode);
-  }
+  final SettingsRepository _repository;
+
+  /// ダークモード設定を変更
+  Future<void> execute({required bool isDarkMode}) async =>
+      _repository.setDarkMode(isDarkMode: isDarkMode);
 }

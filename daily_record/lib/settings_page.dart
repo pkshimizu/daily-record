@@ -1,152 +1,118 @@
+import 'package:daily_record/presentation/pages/github_settings_page.dart';
+import 'package:daily_record/presentation/providers/settings_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'presentation/pages/github_settings_page.dart';
-import 'presentation/providers/github_provider.dart';
-import 'presentation/providers/settings_provider.dart';
-
+/// 設定ページ
 class SettingsPage extends StatefulWidget {
+  /// コンストラクタ
   const SettingsPage({super.key});
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
 }
 
+/// 設定ページの状態管理
 class _SettingsPageState extends State<SettingsPage> {
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('設定'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: Consumer2<SettingsProvider, GitHubProvider>(
-        builder: (context, settingsProvider, githubProvider, child) {
-          return ListView(
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(
+      title: const Text('設定'),
+      backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+    ),
+    body: Consumer<SettingsProvider>(
+      builder:
+          (context, settingsProvider, child) => ListView(
+            padding: const EdgeInsets.all(16),
             children: [
-              // 一般セクション
-              _buildSectionHeader('一般'),
-              _buildSwitchTile(
-                title: 'ダークモード',
-                subtitle: 'ダークテーマを有効にする',
-                value: settingsProvider.isDarkMode,
-                onChanged: (value) {
-                  settingsProvider.toggleDarkMode();
-                },
-                icon: Icons.dark_mode,
+              // ダークモード設定
+              Card(
+                child: ListTile(
+                  leading: Icon(
+                    settingsProvider.isDarkMode
+                        ? Icons.dark_mode
+                        : Icons.light_mode,
+                  ),
+                  title: const Text('ダークモード'),
+                  subtitle: const Text('アプリのテーマを切り替えます'),
+                  trailing: Switch(
+                    value: settingsProvider.isDarkMode,
+                    onChanged:
+                        (value) =>
+                            settingsProvider.setDarkMode(isDarkMode: value),
+                  ),
+                ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
 
-              // 連携セクション
-              _buildSectionHeader('連携'),
-              _buildListTile(
-                title: 'GitHub連携',
-                subtitle:
-                    githubProvider.settings?.isEnabled == true ? '有効' : '無効',
-                icon: Icons.code,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute<GitHubSettingsPage>(
-                      builder: (context) => const GitHubSettingsPage(),
+              // GitHub連携設定
+              Card(
+                child: ListTile(
+                  leading: const Icon(Icons.link),
+                  title: const Text('GitHub連携'),
+                  subtitle: const Text('GitHubとの連携設定'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute<GitHubSettingsPage>(
+                        builder: (context) => const GitHubSettingsPage(),
+                      ),
+                    );
+                  },
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // アプリ情報
+              Card(
+                child: Column(
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.info),
+                      title: const Text('アプリ情報'),
+                      subtitle: const Text('バージョン情報など'),
                     ),
-                  );
-                },
+                    const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text('アプリ名: Daily Record'),
+                          Text('バージョン: 1.0.0'),
+                          Text('開発者: Your Name'),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
 
-              // その他のセクション
-              _buildSectionHeader('その他'),
-              _buildListTile(
-                title: 'アプリについて',
-                subtitle: 'バージョン情報',
-                icon: Icons.info,
-                onTap: () {
-                  _showAboutDialog();
-                },
+              // その他の設定
+              Card(
+                child: Column(
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.settings),
+                      title: const Text('その他の設定'),
+                      subtitle: const Text('追加の設定オプション'),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[Text('今後追加予定の設定項目です。')],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildSectionHeader(String title) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-      child: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.bold,
-          color: Colors.grey,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSwitchTile({
-    required String title,
-    required String subtitle,
-    required bool value,
-    required ValueChanged<bool> onChanged,
-    required IconData icon,
-  }) {
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(title),
-      subtitle: Text(subtitle),
-      trailing: Switch(value: value, onChanged: onChanged),
-    );
-  }
-
-  Widget _buildListTile({
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    VoidCallback? onTap,
-  }) {
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(title),
-      subtitle: Text(subtitle),
-      trailing: onTap != null ? const Icon(Icons.chevron_right) : null,
-      onTap: onTap,
-    );
-  }
-
-  void _showAboutDialog() {
-    showDialog<void>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('アプリについて'),
-          content: const Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Daily Record'),
-              SizedBox(height: 8),
-              Text('バージョン: 1.0.0'),
-              SizedBox(height: 8),
-              Text('日々の記録を簡単に管理できるアプリです。'),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('閉じる'),
-            ),
-          ],
-        );
-      },
-    );
-  }
+    ),
+  );
 }

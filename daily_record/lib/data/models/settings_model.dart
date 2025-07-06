@@ -1,5 +1,8 @@
 /// アプリ全体の設定モデル
 class SettingsModel {
+  /// コンストラクタ
+  SettingsModel({required this.id, required this.key, required this.value});
+
   /// ID
   final int id;
 
@@ -8,9 +11,6 @@ class SettingsModel {
 
   /// 設定値
   final String value;
-
-  /// コンストラクタ
-  SettingsModel({required this.id, required this.key, required this.value});
 
   /// Mapからインスタンス生成
   factory SettingsModel.fromMap(Map<String, dynamic> map) => SettingsModel(

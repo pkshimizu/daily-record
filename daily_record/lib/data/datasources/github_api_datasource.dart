@@ -3,9 +3,11 @@ import 'dart:developer' as developer;
 
 import 'package:http/http.dart' as http;
 
+/// GitHub APIとの通信を担当するデータソース
 class GitHubApiDataSource {
   static const String _baseUrl = 'https://api.github.com';
 
+  /// トークンの形式が有効かどうかをチェック
   bool _isValidTokenFormat(String token) {
     // GitHub Personal Access Tokenの形式をチェック
     // ghp_ で始まるトークン（長さは可変）
@@ -18,6 +20,7 @@ class GitHubApiDataSource {
     return isValid;
   }
 
+  /// GitHubトークンの有効性を検証
   Future<bool> validateToken(String token) async {
     try {
       developer.log(
@@ -59,8 +62,7 @@ class GitHubApiDataSource {
       );
 
       if (response.statusCode == 200) {
-        final Map<String, dynamic> userData =
-            json.decode(response.body) as Map<String, dynamic>;
+        final userData = json.decode(response.body) as Map<String, dynamic>;
         developer.log(
           'User data received: ${userData['login']}',
           name: 'GitHubApiDataSource',
@@ -82,6 +84,7 @@ class GitHubApiDataSource {
     }
   }
 
+  /// GitHubユーザー情報を取得
   Future<Map<String, dynamic>?> getUserInfo(String token) async {
     try {
       final response = await http.get(
@@ -102,6 +105,7 @@ class GitHubApiDataSource {
     }
   }
 
+  /// リポジトリの存在を確認
   Future<bool> validateRepository(
     String token,
     String username,
@@ -121,6 +125,7 @@ class GitHubApiDataSource {
     }
   }
 
+  /// ファイルを作成
   Future<bool> createFile(
     String token,
     String username,
@@ -148,6 +153,7 @@ class GitHubApiDataSource {
     }
   }
 
+  /// ファイルの内容を取得
   Future<String?> getFileContent(
     String token,
     String username,

@@ -1,56 +1,68 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
-class DayDetailPage extends StatelessWidget {
+/// 日付詳細ページ
+class DayDetailPage extends StatefulWidget {
+  /// コンストラクタ
+  const DayDetailPage({required this.selectedDate, super.key});
+
+  /// 選択された日付
   final DateTime selectedDate;
 
-  const DayDetailPage({super.key, required this.selectedDate});
+  @override
+  State<DayDetailPage> createState() => _DayDetailPageState();
+}
+
+/// 日付詳細ページの状態
+class _DayDetailPageState extends State<DayDetailPage> {
+  final TextEditingController _textController = TextEditingController();
 
   @override
-  Widget build(BuildContext context) {
-    final dateFormat = DateFormat('yyyy年M月d日 (E)', 'ja_JP');
-    final formattedDate = dateFormat.format(selectedDate);
+  void initState() {
+    super.initState();
+    _loadContent();
+  }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(formattedDate),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
+  @override
+  void dispose() {
+    _textController.dispose();
+    super.dispose();
+  }
+
+  /// 内容を読み込み
+  Future<void> _loadContent() async {
+    // ここでファイルから内容を読み込むロジックを実装
+    _textController.text = '${widget.selectedDate}の記録';
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(
+      title: Text(
+        '${widget.selectedDate.year}年'
+        '${widget.selectedDate.month}月'
+        '${widget.selectedDate.day}日',
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '日付: $formattedDate',
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-            const Text('この日の記録をここに表示します。', style: TextStyle(fontSize: 16)),
-            const SizedBox(height: 20),
-            Expanded(
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade300),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Text(
-                    '記録エリア\n\nここにその日の詳細な記録を入力できます。',
-                    style: TextStyle(fontSize: 14),
-                  ),
-                ),
+      backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+    ),
+    body: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: <Widget>[
+          Expanded(
+            child: TextField(
+              controller: _textController,
+              maxLines: null,
+              expands: true,
+              decoration: const InputDecoration(
+                hintText: '今日の記録を書いてください...',
+                border: OutlineInputBorder(),
               ),
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 16),
+          const ElevatedButton(onPressed: null, child: Text('保存')),
+        ],
       ),
-    );
-  }
+    ),
+  );
 }
