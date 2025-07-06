@@ -43,6 +43,22 @@ class _DayDetailPageState extends State<DayDetailPage> {
         '${widget.selectedDate.day}日',
       ),
       backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back),
+        onPressed: () => Navigator.of(context).pop(),
+      ),
+      actions: [
+        TextButton.icon(
+          onPressed: _goToPreviousDay,
+          icon: const Icon(Icons.chevron_left),
+          label: const Text('前の日'),
+        ),
+        TextButton.icon(
+          onPressed: _goToNextDay,
+          icon: const Text('次の日'),
+          label: const Icon(Icons.chevron_right),
+        ),
+      ],
     ),
     body: Padding(
       padding: const EdgeInsets.all(16),
@@ -65,4 +81,26 @@ class _DayDetailPageState extends State<DayDetailPage> {
       ),
     ),
   );
+
+  /// 前の日に遷移
+  void _goToPreviousDay() {
+    final previousDay = widget.selectedDate.subtract(const Duration(days: 1));
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute<DayDetailPage>(
+        builder: (context) => DayDetailPage(selectedDate: previousDay),
+      ),
+    );
+  }
+
+  /// 次の日に遷移
+  void _goToNextDay() {
+    final nextDay = widget.selectedDate.add(const Duration(days: 1));
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute<DayDetailPage>(
+        builder: (context) => DayDetailPage(selectedDate: nextDay),
+      ),
+    );
+  }
 }
