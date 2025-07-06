@@ -1,0 +1,43 @@
+# Dart Code Metrics configuration file
+# https://dartcodemetrics.dev/docs/getting-started/configuration
+
+# Anti-patterns to check
+anti-patterns:
+  - long-method
+  - long-parameter-list
+
+# Metrics thresholds
+metrics:
+  cyclomatic-complexity: 20
+  maximum-nesting-level: 5
+  number-of-parameters: 4
+  source-lines-of-code: 50
+
+# Exclude patterns
+metrics-exclude:
+  - test/**
+  - "**/*.g.dart"
+  - "**/*.freezed.dart"
+  - "**/generated_plugin_registrant.dart"
+
+# Rules configuration
+rules:
+  - avoid-unnecessary-type-casts
+  - avoid-unnecessary-type-assertions
+  - avoid-nested-conditional-expressions
+  - avoid-dynamic-calls
+  - avoid-collection-methods-with-unrelated-types
+  - avoid-unnecessary-setstate
+  - avoid-wrapping-in-padding
+  - prefer-extracting-callbacks
+  - prefer-match-file-name
+  - no-equal-then-else
+  - no-magic-number:
+      allowed: [0, 1, -1, 2, 10, 100, 1000]
+  - prefer-conditional-expressions
+  - prefer-first
+  - prefer-last
+  - prefer-single-widget-per-file
+  - require-named-arguments
+  - sized-box-for-whitespace
+  - use-decorated-box 

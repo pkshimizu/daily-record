@@ -59,7 +59,8 @@ class GitHubApiDataSource {
       );
 
       if (response.statusCode == 200) {
-        final userData = json.decode(response.body);
+        final Map<String, dynamic> userData =
+            json.decode(response.body) as Map<String, dynamic>;
         developer.log(
           'User data received: ${userData['login']}',
           name: 'GitHubApiDataSource',
@@ -93,7 +94,7 @@ class GitHubApiDataSource {
       );
 
       if (response.statusCode == 200) {
-        return json.decode(response.body);
+        return json.decode(response.body) as Map<String, dynamic>;
       }
       return null;
     } catch (e) {
@@ -163,9 +164,9 @@ class GitHubApiDataSource {
       );
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+        final data = json.decode(response.body) as Map<String, dynamic>;
         if (data['content'] != null) {
-          return utf8.decode(base64Decode(data['content']));
+          return utf8.decode(base64Decode(data['content'] as String));
         }
       }
       return null;

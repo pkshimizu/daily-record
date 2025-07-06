@@ -1,7 +1,7 @@
-import '../../domain/repositories/github_repository.dart';
-import '../datasources/github_api_datasource.dart';
-import '../datasources/settings_local_datasource.dart';
-import '../models/github_settings_model.dart';
+import 'package:daily_record/data/datasources/github_api_datasource.dart';
+import 'package:daily_record/data/datasources/settings_local_datasource.dart';
+import 'package:daily_record/data/models/github_settings_model.dart';
+import 'package:daily_record/domain/repositories/github_repository.dart';
 
 class GitHubRepositoryImpl implements GitHubRepository {
   final SettingsLocalDataSource _localDataSource;

@@ -1,9 +1,8 @@
 import 'dart:developer' as developer;
 
+import 'package:daily_record/data/models/github_settings_model.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
-
-import '../models/github_settings_model.dart';
 
 class SettingsLocalDataSource {
   static Database? _database;
@@ -15,8 +14,8 @@ class SettingsLocalDataSource {
   }
 
   Future<Database> _initDatabase() async {
-    String path = join(await getDatabasesPath(), 'daily_record.db');
-    return await openDatabase(
+    final path = join(await getDatabasesPath(), 'daily_record.db');
+    return openDatabase(
       path,
       version: 3,
       onCreate: _onCreate,

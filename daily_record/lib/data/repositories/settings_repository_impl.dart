@@ -1,5 +1,5 @@
-import '../../domain/repositories/settings_repository.dart';
-import '../datasources/settings_local_datasource.dart';
+import 'package:daily_record/data/datasources/settings_local_datasource.dart';
+import 'package:daily_record/domain/repositories/settings_repository.dart';
 
 class SettingsRepositoryImpl implements SettingsRepository {
   final SettingsLocalDataSource _localDataSource;

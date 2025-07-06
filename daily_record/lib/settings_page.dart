@@ -52,7 +52,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
+                    MaterialPageRoute<GitHubSettingsPage>(
                       builder: (context) => const GitHubSettingsPage(),
                     ),
                   );
@@ -123,7 +123,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   void _showAboutDialog() {
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(

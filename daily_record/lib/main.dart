@@ -197,7 +197,7 @@ class _BlankPageState extends State<BlankPage> {
     // 詳細ページに遷移
     Navigator.push(
       context,
-      MaterialPageRoute(
+      MaterialPageRoute<DayDetailPage>(
         builder: (context) => DayDetailPage(selectedDate: selectedDay),
       ),
     );
@@ -215,7 +215,9 @@ class _BlankPageState extends State<BlankPage> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const SettingsPage()),
+                MaterialPageRoute<SettingsPage>(
+                  builder: (context) => const SettingsPage(),
+                ),
               );
             },
           ),
@@ -263,7 +265,7 @@ class _BlankPageState extends State<BlankPage> {
             const SizedBox(height: 16),
             // カレンダー
             Expanded(
-              child: TableCalendar(
+              child: TableCalendar<void>(
                 firstDay: DateTime.utc(2020, 1, 1),
                 lastDay: DateTime.utc(2030, 12, 31),
                 focusedDay: _focusedDay,

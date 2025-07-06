@@ -106,7 +106,7 @@ class _GitHubSettingsPageState extends State<GitHubSettingsPage> {
   }
 
   void _showTokenValidationHelp() {
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
