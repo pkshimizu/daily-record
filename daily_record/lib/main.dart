@@ -2,6 +2,7 @@ import 'package:daily_record/data/datasources/github_api_datasource.dart';
 import 'package:daily_record/data/datasources/settings_local_datasource.dart';
 import 'package:daily_record/data/repositories/github_repository_impl.dart';
 import 'package:daily_record/data/repositories/settings_repository_impl.dart';
+import 'package:daily_record/day_detail_page.dart';
 import 'package:daily_record/domain/repositories/github_repository.dart';
 import 'package:daily_record/domain/repositories/settings_repository.dart';
 import 'package:daily_record/presentation/providers/github_provider.dart';
@@ -136,6 +137,14 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       _focusedDay = focusedDay;
     });
+
+    // 日付詳細ページに遷移
+    Navigator.push(
+      context,
+      MaterialPageRoute<DayDetailPage>(
+        builder: (context) => DayDetailPage(selectedDate: selectedDay),
+      ),
+    );
   }
 
   void _showAddEventDialog() {
