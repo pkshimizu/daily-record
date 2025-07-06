@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'presentation/pages/github_settings_page.dart';
+import 'presentation/providers/github_provider.dart';
 import 'presentation/providers/settings_provider.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -11,8 +13,6 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  bool _githubSync = false;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -24,8 +24,8 @@ class _SettingsPageState extends State<SettingsPage> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: Consumer<SettingsProvider>(
-        builder: (context, settingsProvider, child) {
+      body: Consumer2<SettingsProvider, GitHubProvider>(
+        builder: (context, settingsProvider, githubProvider, child) {
           return ListView(
             children: [
               // 一般セクション
@@ -44,16 +44,19 @@ class _SettingsPageState extends State<SettingsPage> {
 
               // 連携セクション
               _buildSectionHeader('連携'),
-              _buildSwitchTile(
+              _buildListTile(
                 title: 'GitHub連携',
-                subtitle: 'GitHubリポジトリと同期する',
-                value: _githubSync,
-                onChanged: (value) {
-                  setState(() {
-                    _githubSync = value;
-                  });
-                },
+                subtitle:
+                    githubProvider.settings?.isEnabled == true ? '有効' : '無効',
                 icon: Icons.code,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const GitHubSettingsPage(),
+                    ),
+                  );
+                },
               ),
 
               const SizedBox(height: 20),

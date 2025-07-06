@@ -3,11 +3,15 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 
+import 'data/datasources/github_api_datasource.dart';
 import 'data/datasources/settings_local_datasource.dart';
+import 'data/repositories/github_repository_impl.dart';
 import 'data/repositories/settings_repository_impl.dart';
 import 'day_detail_page.dart';
 import 'domain/usecases/get_dark_mode_usecase.dart';
+import 'domain/usecases/github_usecases.dart';
 import 'domain/usecases/set_dark_mode_usecase.dart';
+import 'presentation/providers/github_provider.dart';
 import 'presentation/providers/settings_provider.dart';
 import 'settings_page.dart';
 
@@ -24,6 +28,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        // Settings related providers
         Provider<SettingsLocalDataSource>(
           create: (_) => SettingsLocalDataSource(),
         ),
@@ -48,6 +53,82 @@ class MyApp extends StatelessWidget {
               (context) => SettingsProvider(
                 context.read<GetDarkModeUseCase>(),
                 context.read<SetDarkModeUseCase>(),
+              ),
+        ),
+
+        // GitHub related providers
+        Provider<GitHubApiDataSource>(create: (_) => GitHubApiDataSource()),
+        Provider<GitHubRepositoryImpl>(
+          create:
+              (context) => GitHubRepositoryImpl(
+                context.read<SettingsLocalDataSource>(),
+                context.read<GitHubApiDataSource>(),
+              ),
+        ),
+        Provider<GetGitHubSettingsUseCase>(
+          create:
+              (context) => GetGitHubSettingsUseCase(
+                context.read<GitHubRepositoryImpl>(),
+              ),
+        ),
+        Provider<SaveGitHubSettingsUseCase>(
+          create:
+              (context) => SaveGitHubSettingsUseCase(
+                context.read<GitHubRepositoryImpl>(),
+              ),
+        ),
+        Provider<UpdateGitHubEnabledUseCase>(
+          create:
+              (context) => UpdateGitHubEnabledUseCase(
+                context.read<GitHubRepositoryImpl>(),
+              ),
+        ),
+        Provider<ValidateGitHubTokenUseCase>(
+          create:
+              (context) => ValidateGitHubTokenUseCase(
+                context.read<GitHubRepositoryImpl>(),
+              ),
+        ),
+        Provider<GetGitHubUserInfoUseCase>(
+          create:
+              (context) => GetGitHubUserInfoUseCase(
+                context.read<GitHubRepositoryImpl>(),
+              ),
+        ),
+
+        ChangeNotifierProvider(
+          create:
+              (context) => GitHubProvider(
+                getSettingsUseCase: GetGitHubSettingsUseCase(
+                  GitHubRepositoryImpl(
+                    SettingsLocalDataSource(),
+                    GitHubApiDataSource(),
+                  ),
+                ),
+                saveSettingsUseCase: SaveGitHubSettingsUseCase(
+                  GitHubRepositoryImpl(
+                    SettingsLocalDataSource(),
+                    GitHubApiDataSource(),
+                  ),
+                ),
+                updateEnabledUseCase: UpdateGitHubEnabledUseCase(
+                  GitHubRepositoryImpl(
+                    SettingsLocalDataSource(),
+                    GitHubApiDataSource(),
+                  ),
+                ),
+                validateTokenUseCase: ValidateGitHubTokenUseCase(
+                  GitHubRepositoryImpl(
+                    SettingsLocalDataSource(),
+                    GitHubApiDataSource(),
+                  ),
+                ),
+                getUserInfoUseCase: GetGitHubUserInfoUseCase(
+                  GitHubRepositoryImpl(
+                    SettingsLocalDataSource(),
+                    GitHubApiDataSource(),
+                  ),
+                ),
               ),
         ),
       ],
