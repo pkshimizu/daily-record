@@ -321,10 +321,14 @@ class _DayDetailPageState extends State<DayDetailPage> {
                         itemCount: _activities.length,
                         itemBuilder: (context, index) {
                           final activity = _activities[index];
+                          final timeStr =
+                              '${activity.createdAt.hour.toString().padLeft(2, '0')}:${activity.createdAt.minute.toString().padLeft(2, '0')}';
                           return ListTile(
                             leading: const Icon(Icons.code),
                             title: Text(activity.title),
-                            subtitle: Text(activity.description),
+                            subtitle: Text(
+                              '$timeStr - ${activity.description}',
+                            ),
                             trailing: const Icon(Icons.chevron_right),
                             onTap: () {
                               // URLを開く処理（必要に応じて実装）
