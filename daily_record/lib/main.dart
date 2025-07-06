@@ -1,6 +1,15 @@
+import 'package:daily_record/data/datasources/github_api_datasource.dart';
+import 'package:daily_record/data/datasources/settings_local_datasource.dart';
+import 'package:daily_record/data/repositories/github_repository_impl.dart';
+import 'package:daily_record/data/repositories/settings_repository_impl.dart';
+import 'package:daily_record/domain/repositories/github_repository.dart';
+import 'package:daily_record/domain/repositories/settings_repository.dart';
+import 'package:daily_record/presentation/providers/github_provider.dart';
+import 'package:daily_record/presentation/providers/settings_provider.dart';
 import 'package:daily_record/settings_page.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 /// アプリケーションのメインエントリーポイント
@@ -16,13 +25,55 @@ class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) => MaterialApp(
-    title: 'Daily Record',
-    theme: ThemeData(
-      colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      useMaterial3: true,
+  Widget build(BuildContext context) => MultiProvider(
+    providers: [
+      // Data sources
+      Provider<SettingsLocalDataSource>(
+        create: (_) => SettingsLocalDataSource(),
+      ),
+      Provider<GitHubApiDataSource>(create: (_) => GitHubApiDataSource()),
+      // Repositories
+      Provider<SettingsRepository>(
+        create:
+            (context) =>
+                SettingsRepositoryImpl(context.read<SettingsLocalDataSource>()),
+      ),
+      Provider<GitHubRepository>(
+        create:
+            (context) => GitHubRepositoryImpl(
+              context.read<SettingsLocalDataSource>(),
+              context.read<GitHubApiDataSource>(),
+            ),
+      ),
+      // Providers
+      ChangeNotifierProvider<SettingsProvider>(
+        create:
+            (context) => SettingsProvider(context.read<SettingsRepository>()),
+      ),
+      ChangeNotifierProvider<GitHubProvider>(
+        create: (context) => GitHubProvider(context.read<GitHubRepository>()),
+      ),
+    ],
+    child: Consumer<SettingsProvider>(
+      builder:
+          (context, settingsProvider, child) => MaterialApp(
+            title: 'Daily Record',
+            theme: ThemeData(
+              colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+              useMaterial3: true,
+            ),
+            darkTheme: ThemeData(
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: Colors.deepPurple,
+                brightness: Brightness.dark,
+              ),
+              useMaterial3: true,
+            ),
+            themeMode:
+                settingsProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+            home: const MyHomePage(title: 'Daily Record'),
+          ),
     ),
-    home: const MyHomePage(title: 'Daily Record'),
   );
 }
 
@@ -40,8 +91,13 @@ class MyHomePage extends StatefulWidget {
 
 /// ホームページの状態
 class _MyHomePageState extends State<MyHomePage> {
-  DateTime _focusedDay = DateTime.now();
-  DateTime? _selectedDay;
+  late DateTime _focusedDay;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusedDay = DateTime.now();
+  }
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -66,10 +122,9 @@ class _MyHomePageState extends State<MyHomePage> {
       lastDay: DateTime.utc(2030, 12, 31),
       focusedDay: _focusedDay,
       calendarFormat: CalendarFormat.month,
-      selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+      availableCalendarFormats: const {CalendarFormat.month: 'Month'},
       onDaySelected: _onDaySelected,
       onPageChanged: (focusedDay) => _focusedDay = focusedDay,
-      eventLoader: _getEventsForDay,
     ),
     floatingActionButton: FloatingActionButton(
       onPressed: _showAddEventDialog,
@@ -79,12 +134,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _onDaySelected(DateTime selectedDay, DateTime focusedDay) {
     setState(() {
-      _selectedDay = selectedDay;
       _focusedDay = focusedDay;
     });
   }
-
-  List<Event> _getEventsForDay(DateTime day) => <Event>[];
 
   void _showAddEventDialog() {
     showDialog<void>(

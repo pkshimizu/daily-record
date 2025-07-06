@@ -24,7 +24,7 @@ class _SettingsPageState extends State<SettingsPage> {
       builder:
           (context, settingsProvider, child) => ListView(
             padding: const EdgeInsets.all(16),
-            children: [
+            children: <Widget>[
               // ダークモード設定
               Card(
                 child: ListTile(
@@ -43,9 +43,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 16),
-
               // GitHub連携設定
               Card(
                 child: ListTile(
@@ -63,23 +61,21 @@ class _SettingsPageState extends State<SettingsPage> {
                   },
                 ),
               ),
-
               const SizedBox(height: 16),
-
               // アプリ情報
               Card(
                 child: Column(
-                  children: [
-                    ListTile(
-                      leading: const Icon(Icons.info),
-                      title: const Text('アプリ情報'),
-                      subtitle: const Text('バージョン情報など'),
+                  children: <Widget>[
+                    const ListTile(
+                      leading: Icon(Icons.info),
+                      title: Text('アプリ情報'),
+                      subtitle: Text('バージョン情報など'),
                     ),
-                    const Padding(
-                      padding: EdgeInsets.all(16),
+                    Padding(
+                      padding: const EdgeInsets.all(16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
+                        children: const <Widget>[
                           Text('アプリ名: Daily Record'),
                           Text('バージョン: 1.0.0'),
                           Text('開発者: Your Name'),
@@ -89,23 +85,21 @@ class _SettingsPageState extends State<SettingsPage> {
                   ],
                 ),
               ),
-
               const SizedBox(height: 16),
-
               // その他の設定
               Card(
                 child: Column(
-                  children: [
-                    ListTile(
-                      leading: const Icon(Icons.settings),
-                      title: const Text('その他の設定'),
-                      subtitle: const Text('追加の設定オプション'),
+                  children: <Widget>[
+                    const ListTile(
+                      leading: Icon(Icons.settings),
+                      title: Text('その他の設定'),
+                      subtitle: Text('追加の設定オプション'),
                     ),
-                    const Padding(
-                      padding: EdgeInsets.all(16),
+                    Padding(
+                      padding: const EdgeInsets.all(16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[Text('今後追加予定の設定項目です。')],
+                        children: const <Widget>[Text('今後追加予定の設定項目です。')],
                       ),
                     ),
                   ],

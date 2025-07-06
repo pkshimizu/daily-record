@@ -17,13 +17,14 @@ class _GitHubSettingsPageState extends State<GitHubSettingsPage> {
   final _formKey = GlobalKey<FormState>();
   final _tokenController = TextEditingController();
   bool _isLoading = false;
-  String? _errorMessage;
-  String? _successMessage;
+  bool _isEnabled = false;
 
   @override
   void initState() {
     super.initState();
-    _loadCurrentSettings();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadCurrentSettings();
+    });
   }
 
   @override
@@ -34,9 +35,18 @@ class _GitHubSettingsPageState extends State<GitHubSettingsPage> {
 
   Future<void> _loadCurrentSettings() async {
     final provider = context.read<GitHubProvider>();
+
+    // 初期化が完了するまで待機
+    while (!provider.isInitialized) {
+      await Future.delayed(const Duration(milliseconds: 100));
+    }
+
     final settings = provider.settings;
     if (settings != null) {
       _tokenController.text = settings.token;
+      setState(() {
+        _isEnabled = settings.isEnabled;
+      });
     }
   }
 
@@ -45,8 +55,6 @@ class _GitHubSettingsPageState extends State<GitHubSettingsPage> {
 
     setState(() {
       _isLoading = true;
-      _errorMessage = null;
-      _successMessage = null;
     });
 
     try {
@@ -56,18 +64,27 @@ class _GitHubSettingsPageState extends State<GitHubSettingsPage> {
       );
 
       if (isValid) {
-        setState(() {
-          _successMessage = 'トークンが有効です！';
-        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('トークンが有効です！'),
+            backgroundColor: Colors.green,
+          ),
+        );
       } else {
-        setState(() {
-          _errorMessage = 'トークンが無効です。正しいPersonal Access Tokenを入力してください。';
-        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('トークンが無効です。正しいPersonal Access Tokenを入力してください。'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     } catch (e) {
-      setState(() {
-        _errorMessage = 'トークンの検証中にエラーが発生しました: $e';
-      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('トークンの検証中にエラーが発生しました: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     } finally {
       setState(() {
         _isLoading = false;
@@ -80,8 +97,6 @@ class _GitHubSettingsPageState extends State<GitHubSettingsPage> {
 
     setState(() {
       _isLoading = true;
-      _errorMessage = null;
-      _successMessage = null;
     });
 
     try {
@@ -90,17 +105,23 @@ class _GitHubSettingsPageState extends State<GitHubSettingsPage> {
       final newSettings = GitHubSettingsModel(
         id: currentSettings?.id ?? 0,
         token: _tokenController.text.trim(),
-        isEnabled: true,
+        isEnabled: _isEnabled,
       );
       await provider.saveSettings(newSettings);
 
-      setState(() {
-        _successMessage = '設定が保存されました！';
-      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('設定が保存されました！'),
+          backgroundColor: Colors.green,
+        ),
+      );
     } catch (e) {
-      setState(() {
-        _errorMessage = '設定の保存中にエラーが発生しました: $e';
-      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('設定の保存中にエラーが発生しました: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     } finally {
       setState(() {
         _isLoading = false;
@@ -163,111 +184,119 @@ class _GitHubSettingsPageState extends State<GitHubSettingsPage> {
       title: const Text('GitHub設定'),
       backgroundColor: Theme.of(context).colorScheme.inversePrimary,
     ),
-    body: Padding(
-      padding: const EdgeInsets.all(16),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // エラーメッセージ
-            if (_errorMessage != null)
-              Container(
-                padding: const EdgeInsets.all(12),
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: Colors.red.shade50,
-                  border: Border.all(color: Colors.red.shade200),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  _errorMessage!,
-                  style: TextStyle(color: Colors.red.shade700),
-                ),
-              ),
-
-            // 成功メッセージ
-            if (_successMessage != null)
-              Container(
-                padding: const EdgeInsets.all(12),
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: Colors.green.shade50,
-                  border: Border.all(color: Colors.green.shade200),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  _successMessage!,
-                  style: TextStyle(color: Colors.green.shade700),
-                ),
-              ),
-
-            // トークン入力フィールド
-            TextFormField(
-              controller: _tokenController,
-              decoration: const InputDecoration(
-                labelText: 'Personal Access Token',
-                hintText: 'ghp_xxxxxxxxxxxxxxxxxxxx',
-                border: OutlineInputBorder(),
-              ),
-              obscureText: true,
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'トークンを入力してください';
-                }
-                if (!value.trim().startsWith('ghp_')) {
-                  return '有効なPersonal Access Tokenを入力してください';
-                }
-                return null;
-              },
-            ),
-
-            const SizedBox(height: 16),
-
-            // ヘルプボタン
-            OutlinedButton.icon(
-              onPressed: _showHelpDialog,
-              icon: const Icon(Icons.help_outline),
-              label: const Text('トークンの取得方法'),
-            ),
-
-            const SizedBox(height: 16),
-
-            // ボタン群
-            Row(
+    body: Consumer<GitHubProvider>(
+      builder: (context, provider, child) {
+        if (!provider.isInitialized) {
+          return const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _validateToken,
-                    child:
-                        _isLoading
-                            ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                            : const Text('トークンを検証'),
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('設定を読み込み中...'),
+              ],
+            ),
+          );
+        }
+
+        return Padding(
+          padding: const EdgeInsets.all(16),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // トークン入力フィールド
+                TextFormField(
+                  controller: _tokenController,
+                  decoration: const InputDecoration(
+                    labelText: 'Personal Access Token',
+                    hintText: 'ghp_xxxxxxxxxxxxxxxxxxxx',
+                    border: OutlineInputBorder(),
+                  ),
+                  obscureText: true,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'トークンを入力してください';
+                    }
+                    if (!value.trim().startsWith('ghp_')) {
+                      return '有効なPersonal Access Tokenを入力してください';
+                    }
+                    return null;
+                  },
+                ),
+
+                const SizedBox(height: 16),
+
+                // ヘルプボタン
+                OutlinedButton.icon(
+                  onPressed: _showHelpDialog,
+                  icon: const Icon(Icons.help_outline),
+                  label: const Text('トークンの取得方法'),
+                ),
+
+                const SizedBox(height: 16),
+
+                // GitHub連携の有効/無効設定
+                Card(
+                  child: ListTile(
+                    leading: const Icon(Icons.power_settings_new),
+                    title: const Text('GitHub連携'),
+                    subtitle: const Text('GitHubとの連携を有効/無効にします'),
+                    trailing: Switch(
+                      value: _isEnabled,
+                      onChanged: (value) {
+                        setState(() {
+                          _isEnabled = value;
+                        });
+                      },
+                    ),
                   ),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _saveSettings,
-                    child:
-                        _isLoading
-                            ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                            : const Text('設定を保存'),
-                  ),
+
+                const SizedBox(height: 16),
+
+                // ボタン群
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _validateToken,
+                        child:
+                            _isLoading
+                                ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                                : const Text('トークンを検証'),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _saveSettings,
+                        child:
+                            _isLoading
+                                ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                                : const Text('設定を保存'),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     ),
   );
 }

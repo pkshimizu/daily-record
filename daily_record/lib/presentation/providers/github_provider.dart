@@ -7,12 +7,13 @@ import 'package:flutter/material.dart';
 class GitHubProvider extends ChangeNotifier {
   /// コンストラクタ
   GitHubProvider(this._repository) {
-    _loadSettings();
+    _initialize();
   }
 
   final GitHubRepository _repository;
   GitHubSettingsModel? _settings;
   bool _isLoading = false;
+  bool _isInitialized = false;
   String? _error;
 
   /// 設定
@@ -26,6 +27,16 @@ class GitHubProvider extends ChangeNotifier {
 
   /// GitHub連携が有効かどうか
   bool get isEnabled => _settings?.isEnabled ?? false;
+
+  /// 初期化完了フラグ
+  bool get isInitialized => _isInitialized;
+
+  /// 初期化処理
+  Future<void> _initialize() async {
+    await _loadSettings();
+    _isInitialized = true;
+    notifyListeners();
+  }
 
   /// 設定を読み込み
   Future<void> _loadSettings() async {
