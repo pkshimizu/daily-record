@@ -180,4 +180,71 @@ class GitHubApiDataSource {
       return null;
     }
   }
+
+  /// ユーザーアクティビティを取得
+  Future<List<Map<String, dynamic>>> getUserActivity(
+    String token,
+    DateTime date,
+  ) async {
+    try {
+      developer.log(
+        'Fetching user activity for date: ${date.toIso8601String()}',
+        name: 'GitHubApiDataSource',
+      );
+
+      // 指定された日付の範囲でイベントを取得
+      final startDate = DateTime(date.year, date.month, date.day);
+      final endDate = startDate.add(const Duration(days: 1));
+
+      final response = await http.get(
+        Uri.parse('$_baseUrl/users/${await _getUsername(token)}/events'),
+        headers: {
+          'Authorization': 'token $token',
+          'Accept': 'application/vnd.github.v3+json',
+          'User-Agent': 'DailyRecord/1.0',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final events = json.decode(response.body) as List<dynamic>;
+        final filteredEvents = <Map<String, dynamic>>[];
+
+        for (final event in events) {
+          final eventData = event as Map<String, dynamic>;
+          final createdAt = DateTime.parse(eventData['created_at'] as String);
+
+          if (createdAt.isAfter(startDate) && createdAt.isBefore(endDate)) {
+            filteredEvents.add(eventData);
+          }
+        }
+
+        developer.log(
+          'Found ${filteredEvents.length} events for the specified date',
+          name: 'GitHubApiDataSource',
+        );
+
+        return filteredEvents;
+      } else {
+        developer.log(
+          'Failed to fetch events: ${response.statusCode}',
+          name: 'GitHubApiDataSource',
+        );
+        return [];
+      }
+    } catch (e, stackTrace) {
+      developer.log(
+        'Error fetching user activity: $e',
+        name: 'GitHubApiDataSource',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      rethrow;
+    }
+  }
+
+  /// ユーザー名を取得
+  Future<String> _getUsername(String token) async {
+    final userInfo = await getUserInfo(token);
+    return userInfo?['login'] as String? ?? '';
+  }
 }

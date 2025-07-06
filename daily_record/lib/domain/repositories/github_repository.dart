@@ -1,3 +1,4 @@
+import 'package:daily_record/data/models/github_activity_model.dart';
 import 'package:daily_record/data/models/github_settings_model.dart';
 
 /// GitHubリポジトリのインターフェース
@@ -41,4 +42,19 @@ abstract class GitHubRepository {
     String repository,
     String path,
   );
+
+  /// ユーザーアクティビティを取得
+  Future<List<Map<String, dynamic>>> getUserActivity(
+    String token,
+    DateTime date,
+  );
+
+  /// GitHubアクティビティを保存
+  Future<void> saveGitHubActivities(List<GitHubActivityModel> activities);
+
+  /// 指定された日付のGitHubアクティビティを取得
+  Future<List<GitHubActivityModel>> getGitHubActivities(DateTime date);
+
+  /// 指定された日付のGitHubアクティビティを削除
+  Future<void> deleteGitHubActivities(DateTime date);
 }

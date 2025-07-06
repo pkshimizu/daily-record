@@ -1,5 +1,8 @@
+import 'dart:developer' as developer;
+
 import 'package:daily_record/data/datasources/github_api_datasource.dart';
 import 'package:daily_record/data/datasources/settings_local_datasource.dart';
+import 'package:daily_record/data/models/github_activity_model.dart';
 import 'package:daily_record/data/models/github_settings_model.dart';
 import 'package:daily_record/domain/repositories/github_repository.dart';
 
@@ -70,4 +73,34 @@ class GitHubRepositoryImpl implements GitHubRepository {
     String repository,
     String path,
   ) async => _apiDataSource.getFileContent(token, username, repository, path);
+
+  /// ユーザーアクティビティを取得
+  @override
+  Future<List<Map<String, dynamic>>> getUserActivity(
+    String token,
+    DateTime date,
+  ) async {
+    try {
+      return _apiDataSource.getUserActivity(token, date);
+    } catch (e) {
+      developer.log('Error getting user activity: $e');
+      throw e;
+    }
+  }
+
+  /// GitHubアクティビティを保存
+  @override
+  Future<void> saveGitHubActivities(
+    List<GitHubActivityModel> activities,
+  ) async => _localDataSource.saveGitHubActivities(activities);
+
+  /// 指定された日付のGitHubアクティビティを取得
+  @override
+  Future<List<GitHubActivityModel>> getGitHubActivities(DateTime date) async =>
+      _localDataSource.getGitHubActivities(date);
+
+  /// 指定された日付のGitHubアクティビティを削除
+  @override
+  Future<void> deleteGitHubActivities(DateTime date) async =>
+      _localDataSource.deleteGitHubActivities(date);
 }

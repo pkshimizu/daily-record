@@ -1,3 +1,6 @@
+import 'dart:developer' as developer;
+
+import 'package:daily_record/data/models/github_activity_model.dart';
 import 'package:daily_record/data/models/github_settings_model.dart';
 import 'package:daily_record/domain/repositories/github_repository.dart';
 import 'package:flutter/foundation.dart';
@@ -178,6 +181,98 @@ class GitHubProvider extends ChangeNotifier {
     } catch (e) {
       _error = 'ファイル内容の取得に失敗しました: $e';
       return null;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// ユーザーアクティビティを取得
+  Future<List<Map<String, dynamic>>> getUserActivity(DateTime date) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      if (_settings == null || !_settings!.isEnabled) {
+        _error = 'GitHub連携が有効になっていません';
+        return [];
+      }
+
+      developer.log(
+        'Fetching GitHub activity for date: ${date.toIso8601String()}',
+        name: 'GitHubProvider',
+      );
+
+      final result = await _repository.getUserActivity(_settings!.token, date);
+
+      developer.log(
+        'GitHub activity fetch result: ${result.length} activities',
+        name: 'GitHubProvider',
+      );
+
+      return result;
+    } catch (e, stackTrace) {
+      developer.log(
+        'Error in getUserActivity: $e',
+        name: 'GitHubProvider',
+        error: e,
+        stackTrace: stackTrace,
+      );
+
+      _error = 'アクティビティの取得に失敗しました: $e';
+      return [];
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// GitHubアクティビティを保存
+  Future<void> saveGitHubActivities(
+    List<GitHubActivityModel> activities,
+  ) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      await _repository.saveGitHubActivities(activities);
+    } catch (e) {
+      _error = 'アクティビティの保存に失敗しました: $e';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// 指定された日付のGitHubアクティビティを取得
+  Future<List<GitHubActivityModel>> getGitHubActivities(DateTime date) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      return await _repository.getGitHubActivities(date);
+    } catch (e) {
+      _error = 'アクティビティの取得に失敗しました: $e';
+      return [];
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// 指定された日付のGitHubアクティビティを削除
+  Future<void> deleteGitHubActivities(DateTime date) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      await _repository.deleteGitHubActivities(date);
+    } catch (e) {
+      _error = 'アクティビティの削除に失敗しました: $e';
     } finally {
       _isLoading = false;
       notifyListeners();

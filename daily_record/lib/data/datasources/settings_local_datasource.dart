@@ -1,5 +1,6 @@
 import 'dart:developer' as developer;
 
+import 'package:daily_record/data/models/github_activity_model.dart';
 import 'package:daily_record/data/models/github_settings_model.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
@@ -19,7 +20,7 @@ class SettingsLocalDataSource {
     final path = join(await getDatabasesPath(), 'daily_record.db');
     return openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -41,6 +42,20 @@ class SettingsLocalDataSource {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         token TEXT NOT NULL,
         is_enabled INTEGER NOT NULL DEFAULT 0
+      )
+    ''');
+
+    // GitHubアクティビティテーブルを作成
+    await db.execute('''
+      CREATE TABLE github_activities(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        date TEXT NOT NULL,
+        event_type TEXT NOT NULL,
+        repository TEXT NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT NOT NULL,
+        url TEXT NOT NULL,
+        created_at TEXT NOT NULL
       )
     ''');
 
@@ -68,6 +83,22 @@ class SettingsLocalDataSource {
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           token TEXT NOT NULL,
           is_enabled INTEGER NOT NULL DEFAULT 0
+        )
+      ''');
+    }
+
+    if (oldVersion < 4) {
+      // GitHubアクティビティテーブルを追加
+      await db.execute('''
+        CREATE TABLE github_activities(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          date TEXT NOT NULL,
+          event_type TEXT NOT NULL,
+          repository TEXT NOT NULL,
+          title TEXT NOT NULL,
+          description TEXT NOT NULL,
+          url TEXT NOT NULL,
+          created_at TEXT NOT NULL
         )
       ''');
     }
@@ -190,5 +221,103 @@ class SettingsLocalDataSource {
   Future<void> close() async {
     final db = await database;
     await db.close();
+  }
+
+  /// GitHubアクティビティを保存
+  Future<void> saveGitHubActivities(
+    List<GitHubActivityModel> activities,
+  ) async {
+    try {
+      final db = await database;
+
+      // 既存のアクティビティを削除（同じ日付のもの）
+      if (activities.isNotEmpty) {
+        final firstActivity = activities.first;
+        final dateStr = firstActivity.date.toIso8601String().split('T')[0];
+
+        await db.delete(
+          'github_activities',
+          where: 'date = ?',
+          whereArgs: [dateStr],
+        );
+
+        developer.log(
+          'Deleted existing activities for date: $dateStr',
+          name: 'SettingsLocalDataSource',
+        );
+      }
+
+      // 新しいアクティビティを保存
+      final batch = db.batch();
+
+      for (final activity in activities) {
+        // IDを除外して保存（AUTOINCREMENTで自動生成）
+        final activityMap = activity.toMap();
+        activityMap.remove('id');
+        // dateカラムは日付のみ（YYYY-MM-DD）で保存
+        activityMap['date'] = activity.date.toIso8601String().split('T')[0];
+        batch.insert('github_activities', activityMap);
+      }
+
+      await batch.commit(noResult: true);
+      developer.log(
+        'Saved ${activities.length} GitHub activities',
+        name: 'SettingsLocalDataSource',
+      );
+    } catch (e) {
+      developer.log(
+        'Error saving GitHub activities: $e',
+        name: 'SettingsLocalDataSource',
+      );
+      throw Exception('GitHubアクティビティの保存に失敗しました: $e');
+    }
+  }
+
+  /// 指定された日付のGitHubアクティビティを取得
+  Future<List<GitHubActivityModel>> getGitHubActivities(DateTime date) async {
+    try {
+      final db = await database;
+      final dateStr = date.toIso8601String().split('T')[0];
+
+      final List<Map<String, dynamic>> maps = await db.query(
+        'github_activities',
+        where: 'date = ?',
+        whereArgs: [dateStr],
+        orderBy: 'created_at DESC',
+      );
+
+      return maps.map(GitHubActivityModel.fromMap).toList();
+    } catch (e) {
+      developer.log(
+        'Error getting GitHub activities: $e',
+        name: 'SettingsLocalDataSource',
+      );
+      return [];
+    }
+  }
+
+  /// 指定された日付のGitHubアクティビティを削除
+  Future<void> deleteGitHubActivities(DateTime date) async {
+    try {
+      final db = await database;
+      final dateStr = date.toIso8601String().split('T')[0];
+
+      await db.delete(
+        'github_activities',
+        where: 'date = ?',
+        whereArgs: [dateStr],
+      );
+
+      developer.log(
+        'Deleted GitHub activities for date: $dateStr',
+        name: 'SettingsLocalDataSource',
+      );
+    } catch (e) {
+      developer.log(
+        'Error deleting GitHub activities: $e',
+        name: 'SettingsLocalDataSource',
+      );
+      throw Exception('GitHubアクティビティの削除に失敗しました: $e');
+    }
   }
 }
